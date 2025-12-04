@@ -1,1 +1,4 @@
 project_id = "rydfangcveyqblsrklec"
+
+[functions.update-json]
+verify_jwt = false
