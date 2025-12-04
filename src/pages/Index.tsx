@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { LeagueHeader } from '@/components/LeagueHeader';
 import { StandingsTable } from '@/components/StandingsTable';
 import { TopScorers } from '@/components/TopScorers';
@@ -8,7 +8,8 @@ import { MatchForm } from '@/components/MatchForm';
 import { TeamLogoUploader } from '@/components/TeamLogoUploader';
 import { Button } from '@/components/ui/button';
 import { useLeagueStore } from '@/store/leagueStore';
-import { UserPlus, Play, RotateCcw } from 'lucide-react';
+import { useGitHubData } from '@/hooks/useGitHubData';
+import { UserPlus, Play, RotateCcw, Save, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAdmin } from '@/hooks/useAdmin';
 
@@ -17,7 +18,15 @@ const Index = () => {
   const [playerFormOpen, setPlayerFormOpen] = useState(false);
   const [matchFormOpen, setMatchFormOpen] = useState(false);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
-  const { matches, resetLeague } = useLeagueStore();
+  const [saving, setSaving] = useState(false);
+  const { matches, teams, players, resetLeague } = useLeagueStore();
+  const { updateData } = useGitHubData();
+
+  const handleSaveToGitHub = useCallback(async () => {
+    setSaving(true);
+    await updateData({ teams, players, matches });
+    setSaving(false);
+  }, [updateData, teams, players, matches]);
 
   const handleEditPlayer = (playerId: string) => {
     setEditingPlayerId(playerId);
@@ -42,6 +51,15 @@ const Index = () => {
           </Button>
           <Button onClick={() => setMatchFormOpen(true)} className="gap-2 text-sm md:text-base" disabled={!isAdmin || matches.length >= 50}>
             <Play className="w-4 h-4" /> Record Match ({matches.length}/50)
+          </Button>
+          <Button
+            onClick={handleSaveToGitHub}
+            className="gap-2 text-sm md:text-base"
+            variant="secondary"
+            disabled={!isAdmin || saving}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save to GitHub
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
